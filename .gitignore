@@ -1,0 +1,6 @@
+# Ignore compiled files
+/wgrep.pbc
+/wgrep.pir
+
+# Ignore emacs backup files
+*.*~

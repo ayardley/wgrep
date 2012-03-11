@@ -1,0 +1,255 @@
+#! winxed
+/* 
+
+=pod
+
+Copyright (C) 2012, Alvis Yardley
+
+=head1 NAME
+
+wgrep.winxed - A minimial, winxed implementation of grep.
+
+=head1 DESCRIPTION
+
+This is a winxed implementation of Rob Pike's implementation of grep in C. See
+BRIAN W. KERNIGHAN & ROB PIKE, "The Practice of Programming" 222-228 (Addison
+Wesley pub., 1999).
+
+=cut
+
+*/
+
+
+/*
+
+=item C<match(string regexp, string text)>
+
+Search for regexp anywhere in text.
+
+=cut
+
+*/
+function match(string regexp, string text) 
+{
+    var regex = split('', regexp);
+
+    /* I need to advance 'regexp' to point past (or, since I don't have 
+       pointers, not contain) the '^' character. */
+    if (regex[0] == '^') {
+	return matchhere(substr(regexp, 1, length(regexp) - 1), text);
+    }
+    
+    do { /* Need to look even if the string is empty. */
+	if (matchhere(regexp, text))
+	    return 1;
+    } while ((text = substr(text, 1)) != ''); /* Simulate '*text++' */
+
+    return 0;
+}
+
+/* 
+
+=item C<matchhere(string regexp, string text)>
+
+Search for regexp at beginning of text.
+
+=cut
+
+*/
+function matchhere(string regexp, string text) 
+{
+    var regex = split('', regexp);
+    var tex   = split('', text);
+
+    if (regex[0] == '')
+	return 1;
+    if (regex[1] == '*')
+	return matchstar(regex[0],
+			 substr(regexp, 2, length(regexp) - 2),
+			 text);
+    if (regex[0] == '$' && regex[1] == '')
+	return tex[0] == "\n";
+    if (text != '' && (regex[0] == '.' || regex[0] == tex[0]))
+	return matchhere(substr(regexp, 1, length(regexp) - 1),
+			 substr(text, 1, length(text) - 1));
+
+    return 0;
+}
+
+/*
+
+=item C<matchstar(string c, string regexp, string text)>
+
+Search for the character at the beginning of text.
+
+=cut
+
+*/
+function matchstar(string c, string regexp, string text)
+{
+    int i   = 0;
+    var tex = split('', text);
+
+    do { /* a '*' matches zero or more times.  */
+	if (matchhere(regexp, text))
+	    return 1;
+    } while (tex[i] != '' && (tex[i++] == c || c == '.'));
+
+    return 0;
+}
+
+/*
+
+=item C<grep(string regexp, var file, string name)>
+
+Search for regexp in a file.
+
+=cut
+
+*/
+function grep(string regexp, var file, string name)
+{
+    int nmatch;
+    string text;
+    
+    nmatch = 0;
+    while (text = file.readline()) {
+	if (match(regexp, text)) {
+	    nmatch++;
+	    if (name != null)
+		print(name, ":");
+	    print(text);
+	}
+    }
+
+    return nmatch;
+}
+
+
+/*
+
+=item C<main(var args)>
+ 
+=cut
+
+ */
+function main[main](var args) 
+{
+     int i, nmatch;
+
+     if (args == 1) {
+	 show_help();
+	 exit(0);
+     }
+
+     switch (args[1]) {
+     case '-h' :
+     case '--help' : 
+	 show_help();
+	 exit(0);
+	 break;
+	 
+     case '-i' :
+     case '--case-insensitive' :
+	 say("Option unimplemented at this time.");
+	 exit(0);
+	 break;
+
+     case '-n' :
+     case '--line-numbers' :
+	 say("Option unimplemented at this time.");
+	 exit(0);
+	 break;
+
+     case '-s' :
+     case '--invert-sense' :
+	 say("Option unimplemented at this time.");
+	 exit(0);
+	 break;
+
+     case '-v' :
+     case '--version' : 
+	 show_version();
+	 exit(0);
+	 break;
+	    
+     default : 
+	 break;
+     }
+
+     nmatch = 0;
+     if (args == 2) {
+	 // on stdin
+	 if (grep(args[1], getstdin(), null))
+	     nmatch++;
+     } 
+     else {
+         // on file
+	 var file = new 'FileHandle';
+	 for (i = 2; i < args; i++) {
+	     try {
+		 file.open(args[i], "r");
+	     }
+	     catch() {
+		 /* Note: We want to continue in case there are other 
+		          programs to grep on the command line. */
+		 say("unable to open ", args[i], ":");
+	     }
+
+	     string name;
+	     (args > 3) ? name = args[i] : name = null;
+	     if (grep(args[1], file, name) > 0)
+		 nmatch++;
+
+	     file.close();
+	 }
+     }
+     
+     return nmatch == 0;
+}
+
+/* 
+
+=item C<show_help()>
+
+Display help, depending on whether the user specifics the '--help' option
+or, alternatively, specifics an incorrect option.
+
+=cut
+
+*/
+function show_help() 
+{
+    say(<<:
+	Usage: wgrep [options] regexp [filename ...]
+
+    -h|--help             Show this help
+    -i|--case-insensitive Case insensitve match
+    -n|--line-numbers     Display line numbers
+    -s|--invert-sense     Invert sense of match
+    -v|--version          Show version information
+:>>
+); // Note: ');' must be in col. 0 to prevent 'Unterminated heredoc' error
+}
+
+/* 
+
+=item C<show_version()>
+
+Display wgrep's version and copyright information.
+
+=cut
+
+*/
+function show_version() 
+{
+    say(<<:
+This is wgrep, v0.1
+
+Copyright (C) 2012, Alvis Yardley.  All Rights Reserved.
+	  
+The author hereby distributes this program under the terms of The Artistic 
+License 2.0, a copy of which is included in this distribution.
+:>>
+);
+}

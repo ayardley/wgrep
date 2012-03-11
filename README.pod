@@ -1,0 +1,30 @@
+=pod
+
+=head1 NAME
+
+wgrep.winxed - A minimial implementation of grep in the winxed programming
+language.
+
+=head1 SYNOPSIS
+
+=over 4
+
+$ winxed wgrep.winxed [options] regexp [filename ...]
+
+=back
+
+=head1 DESCRIPTION
+
+This is a minimal implementation of Rob Pike's grep in the winxed programming
+language. See BRIAN W. KERNIGHAN & ROB PIKE, "The Practice of Programming"
+222-228 (Addison Wesley pub., 1999).
+
+The principal reason for this program is as an aid to help me to learn and
+better understand certain aspects of the winxed programming language.  It
+boasts of no other (or further) utility than this.
+
+=head1 COPYRIGHT
+
+Copyright (C) 2012, Alvis Yardley
+
+=cut
